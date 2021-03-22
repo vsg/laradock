@@ -1128,15 +1128,15 @@ services:
         - backend
 
 ### Grafana ################################################
-    grafana:
-      build:
-        context: ./grafana
-      volumes:
-        - ${DATA_PATH_HOST}/grafana:/var/lib/grafana
-      ports:
-        - "${GRAFANA_PORT}:3000"
-      networks:
-        - backend
+#    grafana:
+#      build:
+#        context: ./grafana
+#      volumes:
+#        - ${DATA_PATH_HOST}/grafana:/var/lib/grafana
+#      ports:
+#        - "${GRAFANA_PORT}:3000"
+#      networks:
+#        - backend
 
 ### Graylog #######################################
     graylog:
@@ -1907,3 +1907,57 @@ services:
         - ./react:/usr/src/app/react
         - /usr/src/app/react/node_modules
 
+### node ######################################################
+    node:
+      build:
+        context: ./node
+      container_name: node
+      user: "node"
+      ports:
+        - "8081:8081"
+      networks:
+        - backend
+        - frontend
+
+### influxdb ##################################################
+    influxdb:
+      image: influxdb:1.8
+      container_name: influxdb
+      ports:
+        - "8086:8086"
+      environment:
+        - INFLUXDB_DATA_ENGINE=tsm1
+        - INFLUXDB_REPORTING_DISABLED=false
+      volumes:
+        # Data persistency
+        # sudo mkdir -p /srv/docker/influxdb/data
+        - /srv/docker/influxdb/data:/var/lib/influxdb
+      networks:
+        - backend
+
+### telegraf ##################################################
+    telegraf:
+      image: telegraf:latest
+      container_name: telegraf
+      ports:
+        - "8126:8126"
+      volumes:
+        - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      networks:
+        - backend
+
+### grafana ###################################################
+    grafana:
+      image: grafana/grafana:latest
+      container_name: grafana
+      ports:
+        - "4000:3000"
+      environment:
+        - GF_INSTALL_PLUGINS=grafana-clock-panel,briangann-gauge-panel,natel-plotly-panel,grafana-simple-json-datasource
+      user: "0"
+      volumes:
+        # Data persistency
+        # sudo mkdir -p /srv/docker/grafana/data; chown 472:472 /srv/docker/grafana/data
+        - /srv/docker/grafana/data:/var/lib/grafana
+      networks:
+        - backend
